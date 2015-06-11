@@ -1,4 +1,4 @@
-package ca.java.spring.cache.controller;
+package ca.java.spring.cache.web.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
