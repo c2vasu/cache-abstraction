@@ -13,7 +13,6 @@ import net.sf.ehcache.Element;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
 import org.springframework.context.ApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
@@ -30,7 +29,7 @@ public class CacheListener implements ServletContextListener{
 
 	private static final Logger logger = LoggerFactory.getLogger(CacheListener.class);
 	private static final String CACHE_MANAGER = "cacheManager";
-	private static final String YEAR_MAKE_MODLE_BEAN = "ymm";
+	private static final String YEAR_MAKE_MODLE_BEAN = "cacheRepository";
 	private static final String ALL_KEY = "ALL";
 	private static final String YEAR_MAKE_MODEL_KEY = "yearMakeModelCache";
 	
@@ -41,7 +40,7 @@ public class CacheListener implements ServletContextListener{
 
 	@Override
 	public void contextInitialized(ServletContextEvent sce) {
-			logger.info("========> contextInitialized() : BEGIN. ");
+			logger.info("========> Cache Generation : BEGIN. ");
 			ServletContext servletContext = sce.getServletContext();
 			if (null == servletContext) {
 				logger.warn("servlet context is null !");
@@ -49,16 +48,17 @@ public class CacheListener implements ServletContextListener{
 			ApplicationContext ctx = WebApplicationContextUtils.getWebApplicationContext(servletContext);
 			if (null != ctx) {
 				EhCacheCacheManager cacheManager = (EhCacheCacheManager) WebApplicationContextUtils.getWebApplicationContext(servletContext).getBean(CACHE_MANAGER);
-				YearMakeModelRepository yearMakeModelDAOObj = (YearMakeModelRepository) WebApplicationContextUtils.getWebApplicationContext(servletContext).getBean(YEAR_MAKE_MODLE_BEAN);
+				YearMakeModelRepository cacheRepository = (YearMakeModelRepository) WebApplicationContextUtils.getWebApplicationContext(servletContext).getBean(YEAR_MAKE_MODLE_BEAN);
 				Ehcache ehcache = (Ehcache)cacheManager.getCache(YEAR_MAKE_MODEL_KEY).getNativeCache();
-				YearMakeModel yearMakeModelBeanObj  = yearMakeModelDAOObj.findAllYearMakeModel();
-				ehcache.put(new Element(ALL_KEY, yearMakeModelBeanObj));
-				YearMakeModel yearMakeModeBeanInCache = (YearMakeModel)ehcache.get(ALL_KEY).getObjectValue();
-				logger.info("========> contextInitialized() : YMM" +yearMakeModeBeanInCache.getEnglish().keySet()+ " was added in cache.");
+				YearMakeModel yearMakeModel  = cacheRepository.findAllYearMakeModel();
+				ehcache.put(new Element(ALL_KEY, yearMakeModel));
+				logger.info("========> Cache Generation : YMM was added in cache." +yearMakeModel.getEnglish().keySet());
+				YearMakeModel yearMakeModeInCache = (YearMakeModel)ehcache.get(ALL_KEY).getObjectValue();
+				logger.info("========> Cache Generation : YMM from cache." +yearMakeModeInCache.getEnglish().keySet());
 			} else {
 				logger.warn("ctx is null !");
 			}
-			logger.info("========> contextInitialized() : END");
+			logger.info("========> Cache Generation : END");
 		}
 
 }

@@ -10,13 +10,21 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 
+import ca.java.spring.cache.domain.YearMakeModel;
+
 /**
  * The service interface for Year/Make/Model cache.
  *
  * @author Srinivas Rao
  */
-public interface YearMakeModelCacheService {
+public interface YearMakeModelService {
 
+    /**
+     * To get the cached Year/Make/Model.
+     * @return YearMakeModel
+     */
+    YearMakeModel findAllYearMakeModel();
+    
     /**
      * Evict cache.
      * Remove all cache for Year/Make/Model.

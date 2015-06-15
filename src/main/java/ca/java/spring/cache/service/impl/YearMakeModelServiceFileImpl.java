@@ -6,13 +6,16 @@ package ca.java.spring.cache.service.impl;
 
 import java.util.List;
 
+import javax.annotation.Resource;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 
+import ca.java.spring.cache.domain.YearMakeModel;
 import ca.java.spring.cache.repository.YearMakeModelRepository;
-import ca.java.spring.cache.service.YearMakeModelCacheService;
+import ca.java.spring.cache.service.YearMakeModelService;
 
 /** 
  * Implementation of service YearMakeModelCacheService.
@@ -20,12 +23,20 @@ import ca.java.spring.cache.service.YearMakeModelCacheService;
  *
  */
 @Service
-public class YearMakeModelCacheServiceImpl implements YearMakeModelCacheService {
+public class YearMakeModelServiceFileImpl implements YearMakeModelService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(YearMakeModelCacheServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(YearMakeModelServiceFileImpl.class);
 
+    @Resource(name="cacheRepository")
     private YearMakeModelRepository yearMakeModelRepository; 
 
+   /**
+    * To get all the entries of Year/Make/Model.
+    */
+    @Override
+    public YearMakeModel findAllYearMakeModel() {
+	return null;
+    }
 
     /**
      * Remove all data in cache.

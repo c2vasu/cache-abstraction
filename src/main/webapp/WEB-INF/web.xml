@@ -27,7 +27,7 @@
     <listener>
         <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
     </listener>
-    <!-- <listener>
+    <listener>
 		<listener-class>ca.java.spring.cache.web.listener.CacheListener</listener-class>
-	</listener> -->
+	</listener>
 </web-app>

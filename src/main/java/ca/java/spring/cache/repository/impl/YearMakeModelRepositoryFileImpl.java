@@ -5,9 +5,12 @@
 package ca.java.spring.cache.repository.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import javax.annotation.Resource;
 
@@ -15,16 +18,13 @@ import net.sf.ehcache.Ehcache;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Repository;
 
+import ca.java.spring.cache.domain.ModelData;
 import ca.java.spring.cache.domain.YearMakeModel;
 import ca.java.spring.cache.repository.YearMakeModelRepository;
-import ca.java.spring.cache.service.impl.YearMakeModelCacheServiceImpl;
-import com.avivacanada.gi.pl.quoteandbuy.service.vehicle.VinServiceClient;
-import com.avivacanada.gi.pl.quoteandbuy.service.vehicle.cache.EdgeUtil;
-import com.avivacanada.gi.pl.quoteandbuy.util.ConstantAndUtil;
+import ca.java.spring.cache.web.utilities.FileUtility;
 
 
 /**
@@ -34,18 +34,16 @@ import com.avivacanada.gi.pl.quoteandbuy.util.ConstantAndUtil;
  * @author Srinivas Rao
  */
 @Repository
-public class YearMakeModelRepositoryImpl implements YearMakeModelRepository {
+public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository {
 
     private static final Logger LOGGER = LoggerFactory
-	    .getLogger(YearMakeModelCacheServiceImpl.class);
+	    .getLogger(YearMakeModelRepositoryFileImpl.class);
     private static final String ALL_KEY = "ALL";
     private static final String YEAR_MAKE_MODEL_KEY = "yearMakeModelCache";
 
     @Resource(name = "cacheManager")
     private CacheManager cacheManager;
-    
-    @Autowired
-	private VinServiceClient qnbVinService;
+
 
     /**
      * To make a call to backend to fetch all the records of Year/Make/Model.
@@ -59,24 +57,96 @@ public class YearMakeModelRepositoryImpl implements YearMakeModelRepository {
     @Override
     public YearMakeModel findAllYearMakeModel() {
 	LOGGER.info("findAllYearMakeModel is running...");
-	YearMakeModel yearMakeModelObject = null;
-	String yearMakeModelJson = null;
-	List<YearMakeModelDTO_AC> yearMakeModelDTOList = null;
-	try {
+	List<ModelData> rawData = null;	
+	List<ModelData> modelEnList = null;
+	List<ModelData> modelFrList = null;
+	List<ModelData> makeList = null;
+	Map<String, Object> modelEnMap =null;
+	Map<String, Object> modelFrMap =null;
+	Map<String, Object> makeMap =null;
+	YearMakeModel year = new YearMakeModel();
 
-	    yearMakeModelDTOList = EdgeUtil.getYearMakeModelFromPC();
-	    if (yearMakeModelDTOList != null) {
-		yearMakeModelJson = ConstantAndUtil.jacksonObjMapper
-			.writeValueAsString(yearMakeModelDTOList);
-		if (yearMakeModelJson != null) {
-		    yearMakeModelObject = this.qnbVinService.preProcessEdgeResponseForYearMakeModel(yearMakeModelJson);
+
+	try {
+	    rawData = FileUtility.getListFromCSV();
+
+	    //eliminate all duplicate entries
+	    TreeMap<String, Object> yearMap = removeDuplicates(rawData);
+
+	    Iterator it = yearMap.entrySet().iterator();
+	    while (it.hasNext()) {
+
+		Map.Entry pair = (Map.Entry)it.next();
+
+		//get key
+		String yearKey = (String)pair.getKey();
+
+		try {
+		    //list of all make's based on the year input
+		    makeList = getMakeList(rawData, yearKey);
+		    // Record encountered Strings in Map.
+		    makeMap = new TreeMap<String, Object>();
+		    // Loop over argument list.
+		    YearMakeModel make = new YearMakeModel();
+
+		    for (ModelData makeKey : makeList) {
+			// If String is not in map, add it to the map.
+			if (!makeMap.containsKey(makeKey.getMake())) {
+			    makeMap.put(makeKey.getMake(), new Object());
+			    make.getEnglish().put(makeKey.getMake(), new YearMakeModel());
+
+			    //list of all make's based on the year input
+			    modelEnList = getModelList(rawData, yearKey, makeKey.getMake());
+			    // Record encountered Strings in Map.
+			    modelEnMap = new TreeMap<String, Object>();
+			    // Loop over argument list.
+			    YearMakeModel modelEn = new YearMakeModel();
+
+			    for (ModelData modelEnKey : modelEnList) {
+				// If String is not in map, add it to the map.
+				if (!modelEnMap.containsKey(modelEnKey.getModelEn())) {
+				    modelEnMap.put(modelEnKey.getModelEn(),  new Object());
+				    modelEn.getEnglish().put(modelEnKey.getModelEn(), new YearMakeModel());
+				}
+			    }
+
+			    //list of all make's based on the year input
+			    modelFrList = getModelList(rawData, yearKey, makeKey.getMake());
+			    // Record encountered Strings in Map.
+			    modelFrMap = new TreeMap<String, Object>();
+			    // Loop over argument list.
+			    YearMakeModel modelFr = new YearMakeModel();
+			    for (ModelData modelFrKey : modelFrList) {
+				// If String is not in map, add it to the map.
+				if (!modelFrMap.containsKey(modelFrKey.getModelFr())) {
+				    modelFrMap.put(modelFrKey.getModelFr(), new Object());
+				    modelFr.getFrench().put(modelFrKey.getModelFr(), new YearMakeModel());
+				}
+			    }
+			    //update make with models
+			    make.getEnglish().put(makeKey.getMake(), modelEn);
+			    make.getFrench().put(makeKey.getMake(), modelFr);
+			}
+		    }
+		    //add this TreeMap to the parent TreeMap
+		    year.getEnglish().put(yearKey, make);
+
+
+		    //reverse order of the years
+		    year = reverseYears(year);
+
+		} catch (Exception e) {
+		    e.printStackTrace();
+		}finally{
+		    it.remove(); // avoids a ConcurrentModificationException
 		}
+
 	    }
-	} 
-	catch (Exception e) {  
-	    e.printStackTrace(); 
+	} catch (Exception e) {
+	    e.printStackTrace();
 	}
-	return yearMakeModelObject;
+
+	return year;
     }
 
     /**
@@ -210,6 +280,72 @@ public class YearMakeModelRepositoryImpl implements YearMakeModelRepository {
 	    }
 	}
 	return items;
+    }
+
+    /**
+     * To reverse all years from the given Year/Make/Model
+     * @param YearMakeModel
+     * @return YearMakeModel
+     */
+    private YearMakeModel reverseYears(YearMakeModel yearMakeModel) {
+	YearMakeModel reverserYearMakeModel = new YearMakeModel();
+	Map<String, YearMakeModel> originalYearMap = yearMakeModel.getEnglish();
+	Map<String, YearMakeModel> reverserYearMap = new TreeMap<String, YearMakeModel>(Collections.reverseOrder());
+	reverserYearMap.putAll(originalYearMap);
+	reverserYearMakeModel.setEnglish(reverserYearMap);
+	return reverserYearMakeModel;
+    }
+
+    /**
+     * To remove duplicate entries form the complete list and make the collection of unique
+     * @param list
+     * @return TreeMap
+     */
+    public static TreeMap<String, Object> removeDuplicates(List<ModelData> list) {
+	// Record encountered Strings in Map.
+	TreeMap<String, Object> map = new TreeMap<String, Object>();
+
+	// Loop over argument list.
+	for (ModelData key : list) {
+	    // If String is not in map, add it to the the list and map.
+	    if (!map.containsKey(key.getYear())) {
+		map.put(key.getYear(), new Object());
+	    }
+	}
+	return map;
+    }
+    
+    /**
+     * Filtered list of ModelData based on year value from the complete list
+     * @param originalList
+     * @param year
+     * @return List<ModelData>
+     */
+    public static List<ModelData> getMakeList(List<ModelData> originalList, String year){
+	List<ModelData> list = new ArrayList<ModelData>();
+	for (ModelData data : originalList) {
+	    if(year.equals(data.getYear())){
+		list.add(data);
+	    }
+	    
+	}
+	return list;
+    }
+    
+    /**
+     * Filtered list of ModelData based on year and make data value from the complete list
+     * @param originalList
+     * @param year
+     * @return List<ModelData>
+     */
+    public static List<ModelData> getModelList(List<ModelData> originalList, String year, String make){
+	List<ModelData> list = new ArrayList<ModelData>();
+	for (ModelData data : originalList) {
+	    if(year.equals(data.getYear()) && make.equals(data.getMake())){
+		list.add(data);
+	    }
+	}
+	return list;
     }
 
 }
