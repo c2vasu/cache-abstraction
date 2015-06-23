@@ -8,15 +8,11 @@
  * You shall not disclose such Confidential Information and shall use it only in accordance with the terms of the
  * license agreement you entered into with AVIVA.
  * 
- * Creation date : Jun 14, 2015
+ * Creation date : Jun 18, 2015
  * =================================================================================================================
  */
-package ca.java.spring.cache.web.utilities;
-
 /**
  * @author Srinivas Rao
  *
  */
-public class DBUtility {
-    // TODO Auto-generated constructor
-}
+package ca.java.spring.cache.web.utilities;

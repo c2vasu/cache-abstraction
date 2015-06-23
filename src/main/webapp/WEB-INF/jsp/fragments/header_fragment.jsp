@@ -6,13 +6,13 @@
 		<div class="container  l-logo " >
 			<div class="row ">
 				<div class="col-xs-2 t-logo-ml"  >
-					<a href="http://www.google.com/"> 
+					<!-- <a href="http://www.google.com/"> 
 						<h1>Cache Abstraction</h1> 
-					</a>
+					</a> -->
 				</div>
 				<div class="col-xs-10 t-logo-desc" >
 					<h1>
-						Cache Abstraction
+						Cache Abstraction Demo !!
 					</h1>
 				</div>
 			</div>

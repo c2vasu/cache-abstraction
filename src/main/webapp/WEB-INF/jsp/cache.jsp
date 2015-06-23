@@ -14,7 +14,7 @@
 		<%-- /HEADER --%>
 		
 		<%-- CONTENT --%>			
-		<jsp:include page="fragments/index_fragment.jsp"/>
+		<jsp:include page="fragments/cache_fragment.jsp"/>
 		<%-- /CONTENT --%>
 			
 		<%-- FOOTER --%>

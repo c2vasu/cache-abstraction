@@ -1,73 +1,98 @@
-/**
- * =================================================================================================================
- * Copyright (c) 2015 by avivacanada.com. 
- * Aviva Canada Insurance Limited. Registered Office (Head Office) Scarborough, 2200-2206 Eglinton Ave. East M1L 4S8.
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of AVIVA ("Confidential Information").
- * You shall not disclose such Confidential Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with AVIVA.
- * 
- * Creation date : Jun 11, 2015
- * =================================================================================================================
+/*
+ * Copyright (c) 2015 Srinivas Rao. All rights reserved.
+ * Creation Date : 22-Jun-2015
  */
+
 package ca.java.spring.cache.web.controller;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.annotation.Resource;
 
-import net.sf.ehcache.Ehcache;
-import net.sf.ehcache.Element;
-
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.ehcache.EhCacheCacheManager;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
 
-import ca.java.spring.cache.domain.ModelData;
 import ca.java.spring.cache.domain.RequestDTO;
-import ca.java.spring.cache.domain.YearMakeModel;
-import ca.java.spring.cache.repository.impl.YearMakeModelRepositoryDBImpl;
+import ca.java.spring.cache.domain.ViewData;
 import ca.java.spring.cache.service.YearMakeModelService;
-import ca.java.spring.cache.web.utilities.FileUtility;
 
 @Controller
 public class CacheController {
-	private static final Logger LOGGER = Logger.getLogger(CacheController.class);
-	private static final String ALL_KEY = "ALL";
+    private static final Logger LOGGER = Logger.getLogger(CacheController.class);
+    private static final String ALL_KEY = "ALL";
 
     @Resource(name="cacheManager")
     private EhCacheCacheManager cacheManager;
 
     @Resource(name="cacheService")
     private YearMakeModelService cacheService;
-    
-    @Resource(name="databaseRepository")
-    private YearMakeModelRepositoryDBImpl databaseRepository;
-    
-    @RequestMapping("/index")
-    public String index() {
-	return "index";
-    }
-    
-    @RequestMapping("/insert")
+
+    /*@Resource(name="databaseRepository")
+    private YearMakeModelRepositoryDBImpl databaseRepository;*/
+
+    @Autowired
+    @Qualifier("viewData")
+    private ViewData viewData;
+
+
+    /*@RequestMapping("/insert")
     public String insert() {
 	List<ModelData> rawData = null;	
-	
+
 	rawData = FileUtility.getListFromCSV();
 	LOGGER.info("Insert...");
 	for(ModelData data : rawData){
 	    LOGGER.info(data);
 	    databaseRepository.createModelData(data);
 	}
-	
+
 	return "insert";
+    }*/
+    
+    
+    /**
+     * The front controller for Year/Make/Model using HSQL Database as Repository.
+     * @param viewData
+     * @return ModelAndView
+     */
+    @ModelAttribute("viewData")
+    @RequestMapping(value="/index", method=RequestMethod.GET)
+    public ModelAndView yearMakeModelUsingDatabase(@ModelAttribute("viewData") ViewData viewData){
+
+	List<String> years = null;
+	ModelAndView mav = new ModelAndView("cache");
+	//from cache service
+	years = cacheService.findAllYears(ALL_KEY);
+	mav.addObject("years", years);
+	return mav;
+
     }
+
+    /**
+     * The front controller for Year/Make/Model using File System as Repository.
+     * @param viewData
+     * @return ModelAndView
+     */
+    /*@ModelAttribute("viewData")
+    @RequestMapping(value="/index", method=RequestMethod.GET)
+    public ModelAndView yearMakeModelUsingFileSystem(@ModelAttribute("viewData") ViewData viewData){
+	List<String> years = null;
+	ModelAndView mav = new ModelAndView("cache");
+	//from cache service
+	years = cacheService.findAllYears(ALL_KEY);
+	mav.addObject("years", years);
+	return mav;
+
+    }*/
 
     /**
      * Front controller for vehicle page to filter Make based on selected Year option
@@ -117,29 +142,6 @@ public class CacheController {
      */
     @RequestMapping(value="/clearCache", method = RequestMethod.GET)
     public @ResponseBody String clearCache() {  
-
-	YearMakeModel yearMakeModelObj =null;
-	LOGGER.info("Method executed to clear the cache. Current time is :: "+ new Date());
-	Ehcache ehcache = (Ehcache)cacheManager.getCache("yearMakeModelCache").getNativeCache();
-	try {
-	    yearMakeModelObj  = cacheService.findAllYearMakeModel();
-	    if(yearMakeModelObj!=null){
-		//since operation successful clear the cache 
-		cacheService.clearCache();
-		LOGGER.warn("yearMakeModelCache cache cleared successful");
-		//update with latest cache
-		ehcache.put(new Element(ALL_KEY, yearMakeModelObj));
-		LOGGER.warn("cache updated with the latest entries");
-
-		YearMakeModel yearMakeModeInCache = (YearMakeModel)ehcache.get(ALL_KEY).getObjectValue();
-		LOGGER.info("from cache year list" +yearMakeModeInCache.getEnglish().keySet()+ " was added in cache.");
-		LOGGER.info("Task Year Make Model clear cache completed : operation successful");
-
-	    }
-	} catch (Exception excpetion) {
-	    LOGGER.error("Task Year Make Model : operation failed "+excpetion.getMessage());
-	    excpetion.printStackTrace();
-	}
-	return "true";
+	return cacheService.clearCache();
     }
 }

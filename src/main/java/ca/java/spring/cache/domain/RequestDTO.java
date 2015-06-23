@@ -6,6 +6,7 @@ package ca.java.spring.cache.domain;
 import java.util.List;
 
 /**
+ * The request DTO for all the AJAX call using JSON.
  * @author Srinivas Rao
  *
  */

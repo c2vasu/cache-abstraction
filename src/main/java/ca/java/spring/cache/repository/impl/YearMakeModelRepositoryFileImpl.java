@@ -6,6 +6,7 @@ package ca.java.spring.cache.repository.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +16,12 @@ import java.util.TreeMap;
 import javax.annotation.Resource;
 
 import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Repository;
 
 import ca.java.spring.cache.domain.ModelData;
@@ -50,13 +53,12 @@ public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository 
      * This method will return YearMakeModel bean object. This method should not
      * be cached
      *
-     * @see com.aviva.global.gi.modules.pl.modules.quote.auto.repository.YearMakeModelRepository
-     * #findAllYearMakeModel()
+     * @see YearMakeModelRepository#findAllYearMakeModel()
      * @return YearMakeModel
      */
     @Override
     public YearMakeModel findAllYearMakeModel() {
-	LOGGER.info("findAllYearMakeModel is running...");
+	LOGGER.info("findAllYearMakeModel is running from File System Repository...");
 	List<ModelData> rawData = null;	
 	List<ModelData> modelEnList = null;
 	List<ModelData> modelFrList = null;
@@ -152,8 +154,7 @@ public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository 
     /**
      * This method will return YearMakeModel bean from cache manager.
      * 
-     * @see com.aviva.global.gi.modules.pl.modules.quote.auto.repository.YearMakeModelRepository
-     * #findYearMakeModel(org.springframework.cache.CacheManager)
+     * @see YearMakeModelRepository#findYearMakeModel(CacheManager)
      * @param cacheManager
      *             the cache manager
      * @return YearMakeModel
@@ -163,20 +164,51 @@ public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository 
 	YearMakeModel yearMakeModeBeanInCache = null;
 	Ehcache ehcache = (Ehcache) cacheManager.getCache(YEAR_MAKE_MODEL_KEY)
 		.getNativeCache();
-	LOGGER.warn("ehcache !" + ehcache);
 	yearMakeModeBeanInCache = (YearMakeModel) ehcache.get(ALL_KEY)
 		.getObjectValue();
+	LOGGER.info("findYearMakeModel is running from EhCache...");
 	return yearMakeModeBeanInCache;
     }
 
     /**
      * Clear cache.
      * 
-     * @see com.aviva.global.gi.modules.pl.modules.quote.auto.repository.YearMakeModelRepository
-     * #clearCache()
+     * @see YearMakeModelRepository#clearCache()
      */
     @Override
-    public void clearCache() {
+    public String clearCache() {
+	YearMakeModel yearMakeModeBean =null;
+	String flag = "Unsuccessful";
+	LOGGER.info("Method executed to clear the cache. Current time is :: "+ new Date());
+	Ehcache ehcache = (Ehcache)cacheManager.getCache("yearMakeModelCache").getNativeCache();
+	try {
+	    //Get from backend repository
+	    LOGGER.info("Call to backend reposioty to fetch all the record from Year/Make/Model:" );
+	    yearMakeModeBean = findAllYearMakeModel();
+	    if(yearMakeModeBean!=null){
+		LOGGER.info("Succesfully operation to fetching all the records of Year/Make/Model from backend");
+		//since operation successful clear the cache 
+		evictCache();
+		LOGGER.warn("yearMakeModelCache cache cleared successful");
+		//update with latest cache
+		ehcache.put(new Element(ALL_KEY, yearMakeModeBean));
+		LOGGER.warn("cache updated with the latest entries");
+
+		YearMakeModel yearMakeModeInCache = (YearMakeModel)ehcache.get(ALL_KEY).getObjectValue();
+		LOGGER.info("from cache year list" +yearMakeModeInCache.getEnglish().keySet()+ " was added in cache.");
+		LOGGER.info("Task Year Make Model clear cache completed : operation successful");
+		
+		//successful
+		flag = "Successful";
+	    }else{
+		LOGGER.info("Unsuccesfully operation to fetching all the records of Year/Make/Model from backend");
+		flag = "Unsuccessful";
+	    }
+	} catch (Exception excpetion) {
+	    LOGGER.error("Task Year Make Model : operation failed "+excpetion.getMessage());
+	    excpetion.printStackTrace();
+	}
+	return flag;
     }
 
     /**
@@ -186,13 +218,12 @@ public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository 
      *            the name
      * @return the list
      * 
-     * @see com.aviva.global.gi.modules.pl.modules.quote.auto.repository.YearMakeModelRepository
-     * #findAllYears(java.lang.String)
+     * @see YearMakeModelRepository#findAllYears(java.lang.String)
      */
     @Override
     public List<String> findAllYears(String name) {
 	List<String> items = new ArrayList<String>();
-	LOGGER.info("findAllYears is running...");
+	LOGGER.info("findAllYears is running from File System Repository...");
 	YearMakeModel yearMakeModeBean = null;
 	Set years = null;
 
@@ -215,14 +246,12 @@ public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository 
      *            the cache manager
      * @return the list
      * 
-     * @see com.aviva.global.gi.modules.pl.modules.quote.auto.repository.YearMakeModelRepository
-     * #findAllMakes(java.lang.String,
-     *      org.springframework.cache.CacheManager)
+     * @see YearMakeModelRepository#findAllMakes(String,CacheManager)
      */
     @Override
     public List<String> findAllMakes(String year, CacheManager cacheManager) {
 	List<String> items = new ArrayList<String>();
-	LOGGER.info("findAllMakes is running...");
+	LOGGER.info("findAllMakes is running File System Repository...");
 	YearMakeModel yearMakeModeBean = null;
 	Set makeKeySet = null;
 	YearMakeModel make = null;
@@ -252,15 +281,14 @@ public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository 
      *            the cache manager
      * @return the list
      * 
-     * @see com.aviva.global.gi.modules.pl.modules.quote.auto.repository.YearMakeModelRepository
-     * #findAllModels(java.lang.String,
-     *      java.lang.String, org.springframework.cache.CacheManager)
+     * @see YearMakeModelRepository#findAllModels(String,
+     *      String, CacheManager)
      */
     @Override
     public List<String> findAllModels(String year, String make,
 	    CacheManager cacheManager) {
 	List<String> items = new ArrayList<String>();
-	LOGGER.info("findAllModels is running...");
+	LOGGER.info("findAllModels is running from File System Repository...");
 	YearMakeModel yearMakeModeBean = null;
 	YearMakeModel makeObject = null;
 	YearMakeModel modelObject = null;
@@ -348,4 +376,18 @@ public class YearMakeModelRepositoryFileImpl implements YearMakeModelRepository 
 	return list;
     }
 
+    /**
+     * This method creates model data if data does not exits.
+     */
+    @Override
+    public void createModelData(ModelData data) {
+    }
+
+    /**
+     * To evict all the entries of cache.
+     */
+    @CacheEvict(value = "yearMakeModelFindCache", allEntries = true)
+    private void evictCache(){
+	
+    }
 }

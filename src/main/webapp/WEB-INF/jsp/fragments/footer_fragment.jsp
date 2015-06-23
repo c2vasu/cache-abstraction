@@ -10,27 +10,11 @@
 			</div>
 
 			<div class="l-footer-wrapper col-lg-8 col-md-10 col-sm-10 col-xs-10">
-				<h2 class="visually-hidden" id="lbl-site-information">Site information</h2>
+				<h2 class="visually-hidden" id="lbl-site-information">&nbsp;</h2>
 
 				<div class="row l-footer-site-info">
 
-					<ul class="l-footer-link-list col-sm-offset  col-sm-9" >
-						<li>
-							<a href="http://www.avivacanada.com/">Accessibility</a>
-						</li>
-						<li>
-							<a href="http://www.avivacanada.com/">Legal</a>
-						</li>
-						<li>
-							<a href="http://www.avivacanada.com/">Privacy policy</a>
-						</li>
-						<li>
-							<a href="http://www.avivacanada.com/">Cookie policy</a>
-						</li>
-					</ul>
-					<div class="l-footer-copyright  col-sm-2" id="lbl-copyright">
-						&copy; 2015 Aviva
-					</div>
+					&nbsp;
 
 				</div>
 

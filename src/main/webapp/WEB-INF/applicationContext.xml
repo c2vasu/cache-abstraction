@@ -21,20 +21,35 @@
 
 
 
+	<bean id="viewData" class="ca.java.spring.cache.domain.ViewData" />
 
-	<bean id="cacheRepository" class="ca.java.spring.cache.repository.impl.YearMakeModelRepositoryFileImpl" />
-	<bean id="cacheService" class="ca.java.spring.cache.service.impl.YearMakeModelServiceFileImpl" />
-
-	<jdbc:embedded-database id="dataSource" type="HSQL">
-		<jdbc:script location="classpath:schema.sql" />
-	</jdbc:embedded-database>
-
-	<bean id="databaseRepository" class="ca.java.spring.cache.repository.impl.YearMakeModelRepositoryDBImpl" >
+	<!-- Cache Repository -->
+	<!-- <bean id="cacheRepository" class="ca.java.spring.cache.repository.impl.YearMakeModelRepositoryFileImpl" /> -->
+	<bean id="cacheRepository" class="ca.java.spring.cache.repository.impl.YearMakeModelRepositoryDBImpl" >
 		<property name="dataSource" ref="dataSource" />
 	</bean>
 	
+
+	<!-- Cache Repository Database Config-->
+	<jdbc:embedded-database id="dataSource" type="HSQL">
+		<jdbc:script location="classpath:schema.sql" />
+	</jdbc:embedded-database>
 	
 	
+
+	<!-- Cache Service -->
+	<bean id="cacheService" class="ca.java.spring.cache.service.impl.YearMakeModelServiceImpl" />
+	
+	<!-- properties file config -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="locations">
+			<list>
+				<value>classpath:/hazelcast-config.properties</value>
+			</list>
+		</property>
+	</bean>
+
 	<!-- Cache Config -->
 	<cache:annotation-driven />
 	<bean id="cacheManager" class="org.springframework.cache.ehcache.EhCacheCacheManager"
@@ -45,12 +60,5 @@
 			<property name="configLocation" value="classpath:ehcache.xml" />
 		</bean>
 	</beans>
-
-	<!-- <beans profile="dev"> <jdbc:embedded-database id="dataSource" type="HSQL"> 
-		<jdbc:script location="classpath:schema.sql" /> <jdbc:script location="classpath:test-data.sql" 
-		/> </jdbc:embedded-database> <bean id="cacheRepository" class="ca.java.spring.cache.repository.impl.YearMakeModelRepositoryDBImpl" 
-		/> </beans> -->
-
-
 
 </beans>

@@ -7,9 +7,9 @@ package ca.java.spring.cache.service;
 import java.util.List;
 
 import org.springframework.cache.CacheManager;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 
+import ca.java.spring.cache.domain.ModelData;
 import ca.java.spring.cache.domain.YearMakeModel;
 
 /**
@@ -29,8 +29,7 @@ public interface YearMakeModelService {
      * Evict cache.
      * Remove all cache for Year/Make/Model.
      */
-    @CacheEvict(value = "yearMakeModelFindCache", allEntries = true)
-    void clearCache();
+    String clearCache();
 	
     /**
      * Find all years.
@@ -70,4 +69,10 @@ public interface YearMakeModelService {
      */
     @Cacheable(value = "modelsFindCache", key = "#year + #make")
     List<String> findAllModels(String year, String make, CacheManager cacheManager);
+    
+    /**
+     * To insert model data into the repository.
+     * @param data
+     */
+    void createModelData(ModelData data);
 }

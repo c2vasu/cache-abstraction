@@ -1,22 +1,15 @@
-/**
- * =================================================================================================================
- * Copyright (c) 2015 by avivacanada.com. 
- * Aviva Canada Insurance Limited. Registered Office (Head Office) Scarborough, 2200-2206 Eglinton Ave. East M1L 4S8.
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of AVIVA ("Confidential Information").
- * You shall not disclose such Confidential Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with AVIVA.
- * 
- * Creation date : Jun 14, 2015
- * =================================================================================================================
+/*
+ * Copyright (c) 2015 Srinivas Rao. All rights reserved.
+ * Creation Date : 22-Jun-2015
  */
+
 package ca.java.spring.cache.repository.impl;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,9 +19,13 @@ import java.util.TreeMap;
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
+import net.sf.ehcache.Ehcache;
+import net.sf.ehcache.Element;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 
@@ -60,7 +57,7 @@ public class YearMakeModelRepositoryDBImpl implements YearMakeModelRepository {
      */
     @Override
     public YearMakeModel findAllYearMakeModel() {
-	LOGGER.info("findAllYearMakeModel is running...");
+	LOGGER.info("findAllYearMakeModel is running from Database Repository...");
 	List<ModelData> rawData = null;	
 	List<ModelData> modelEnList = null;
 	List<ModelData> modelFrList = null;
@@ -154,19 +151,61 @@ public class YearMakeModelRepositoryDBImpl implements YearMakeModelRepository {
 	return year;
     }
 
-    /* 
-     * @see ca.java.spring.cache.repository.YearMakeModelRepository#findYearMakeModel(org.springframework.cache.CacheManager)
+    /**
+     * This method will return YearMakeModel bean from cache manager.
+     * 
+     * @param cacheManager
+     *             the cache manager
+     * @return YearMakeModel
      */
     @Override
     public YearMakeModel findYearMakeModel(CacheManager cacheManager) {
-	return null;
+	YearMakeModel yearMakeModeBeanInCache = null;
+	Ehcache ehcache = (Ehcache) cacheManager.getCache(YEAR_MAKE_MODEL_KEY)
+		.getNativeCache();
+	yearMakeModeBeanInCache = (YearMakeModel) ehcache.get(ALL_KEY)
+		.getObjectValue();
+	LOGGER.info("findYearMakeModel is running from EhCache...");
+	return yearMakeModeBeanInCache;
     }
 
     /* 
      * @see ca.java.spring.cache.repository.YearMakeModelRepository#clearCache()
      */
     @Override
-    public void clearCache() {
+    public String clearCache() {
+	YearMakeModel yearMakeModeBean =null;
+	String flag = "Unsuccessful";
+	LOGGER.info("Method executed to clear the cache. Current time is :: "+ new Date());
+	Ehcache ehcache = (Ehcache)cacheManager.getCache("yearMakeModelCache").getNativeCache();
+	try {
+	    //Get from backend repository
+	    LOGGER.info("Call to backend reposioty to fetch all the record from Year/Make/Model:" );
+	    yearMakeModeBean = findAllYearMakeModel();
+	    if(yearMakeModeBean!=null){
+		LOGGER.info("Succesfully operation to fetching all the records of Year/Make/Model from backend");
+		//since operation successful clear the cache 
+		evictCache();
+		LOGGER.warn("yearMakeModelCache cache cleared successful");
+		//update with latest cache
+		ehcache.put(new Element(ALL_KEY, yearMakeModeBean));
+		LOGGER.warn("cache updated with the latest entries");
+
+		YearMakeModel yearMakeModeInCache = (YearMakeModel)ehcache.get(ALL_KEY).getObjectValue();
+		LOGGER.info("from cache year list" +yearMakeModeInCache.getEnglish().keySet()+ " was added in cache.");
+		LOGGER.info("Task Year Make Model clear cache completed : operation successful");
+		
+		//successful
+		flag = "Successful";
+	    }else{
+		LOGGER.info("Unsuccesfully operation to fetching all the records of Year/Make/Model from backend");
+		flag = "Unsuccessful";
+	    }
+	} catch (Exception excpetion) {
+	    LOGGER.error("Task Year Make Model : operation failed "+excpetion.getMessage());
+	    excpetion.printStackTrace();
+	}
+	return flag;
     }
 
     /* 
@@ -175,7 +214,7 @@ public class YearMakeModelRepositoryDBImpl implements YearMakeModelRepository {
     @Override
     public List<String> findAllYears(String name) {
 	List<String> items = new ArrayList<String>();
-	LOGGER.info("findAllYears is running...");
+	LOGGER.info("findAllYears is running from Database Repository...");
 	YearMakeModel yearMakeModeBean = null;
 	Set years = null;
 
@@ -195,7 +234,7 @@ public class YearMakeModelRepositoryDBImpl implements YearMakeModelRepository {
     @Override
     public List<String> findAllMakes(String year, CacheManager cacheManager) {
 	List<String> items = new ArrayList<String>();
-	LOGGER.info("findAllMakes is running...");
+	LOGGER.info("findAllMakes is running from Database Repository...");
 	YearMakeModel yearMakeModeBean = null;
 	Set makeKeySet = null;
 	YearMakeModel make = null;
@@ -221,7 +260,7 @@ public class YearMakeModelRepositoryDBImpl implements YearMakeModelRepository {
     public List<String> findAllModels(String year, String make,
 	    CacheManager cacheManager) {
 	List<String> items = new ArrayList<String>();
-	LOGGER.info("findAllModels is running...");
+	LOGGER.info("findAllModels is running from Database Repository...");
 	YearMakeModel yearMakeModeBean = null;
 	YearMakeModel makeObject = null;
 	YearMakeModel modelObject = null;
@@ -330,10 +369,18 @@ public class YearMakeModelRepositoryDBImpl implements YearMakeModelRepository {
 	}
     }
 
+    @Override
     public void createModelData(ModelData data) {
-	LOGGER.info("jdbcTemplate :"+jdbcTemplate);
 	jdbcTemplate.update("insert into data (year,make,model_en,model_fr) " +
 		"values (?,?,?,?)", new Object[] {data.getYear(), data.getMake(), data.getModelEn(), data.getModelFr()});
+    }
+    
+    /**
+     * To evict all the entries of cache.
+     */
+    @CacheEvict(value = "yearMakeModelFindCache", allEntries = true)
+    private void evictCache(){
+	
     }
 
 }

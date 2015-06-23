@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.springframework.cache.CacheManager;
 
+import ca.java.spring.cache.domain.ModelData;
 import ca.java.spring.cache.domain.YearMakeModel;
 
 /**
@@ -41,7 +42,7 @@ public interface YearMakeModelRepository {
      * Clear cache.
      * Remove all cache for Year/Make/Model.
      */
-    void clearCache();
+    String clearCache();
 
     /**
      * Find all years Year/Make/Model cache.
@@ -75,4 +76,10 @@ public interface YearMakeModelRepository {
      * @return the list
      */
     List<String> findAllModels(String year, String make, CacheManager cacheManager);
+    
+    /**
+     * To insert model data into the repository.
+     * @param data
+     */
+    void createModelData(ModelData data);
 }

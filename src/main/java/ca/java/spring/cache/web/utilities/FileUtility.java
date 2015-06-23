@@ -1,22 +1,17 @@
-/**
- * =================================================================================================================
- * Copyright (c) 2015 by avivacanada.com. 
- * Aviva Canada Insurance Limited. Registered Office (Head Office) Scarborough, 2200-2206 Eglinton Ave. East M1L 4S8.
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of AVIVA ("Confidential Information").
- * You shall not disclose such Confidential Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with AVIVA.
- * 
- * Creation date : Jun 11, 2015
- * =================================================================================================================
+/*
+ * Copyright (c) 2015 Srinivas Rao. All rights reserved.
+ * Creation Date : 22-Jun-2015
  */
+
 package ca.java.spring.cache.web.utilities;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import au.com.bytecode.opencsv.CSVReader;
 import au.com.bytecode.opencsv.bean.ColumnPositionMappingStrategy;
@@ -28,6 +23,8 @@ import ca.java.spring.cache.domain.ModelData;
  *
  */
 public class FileUtility {
+    private static final Logger LOGGER = LoggerFactory
+	    .getLogger(FileUtility.class);
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static void main(String[] args) throws Exception
     {
@@ -40,11 +37,11 @@ public class FileUtility {
        List list = csv.parse(setColumMapping(), csvReader);
        yymList.addAll(list);
        
-       /*for (Object object : list) {
+       for (Object object : list) {
 	   ModelData yym = (ModelData) object;
            System.out.println(yym);
        }
-       System.out.println(yymList);*/
+       System.out.println(yymList);
     }
      
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -61,8 +58,9 @@ public class FileUtility {
 	CsvToBean csv = new CsvToBean();
 	List<ModelData> yymList = new ArrayList<ModelData>(); 
 	try {
-	    String csvFilename = "src/main/resources/ymm_2500.csv";
-	    CSVReader csvReader = new CSVReader(new FileReader(csvFilename));
+	    String path = FileUtility.class.getClassLoader().getResource("ymm_2500.csv").getPath();
+	    
+	    CSVReader csvReader = new CSVReader(new FileReader(path));
 	            
 	    //Set column mapping strategy
 	    List list = csv.parse(setColumMapping(), csvReader);

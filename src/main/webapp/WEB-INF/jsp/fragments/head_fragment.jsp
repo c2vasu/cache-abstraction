@@ -11,5 +11,5 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 		<meta name="description" content="Cache Abstraction">
 		<title>Cache Abstraction</title>
-		<link rel="stylesheet" type="text/css" href=<%= "\"" + System.getenv().get("STATIC_FILES_URL") + "css/style.css\"" %> />
+		<%-- <link rel="stylesheet" type="text/css" href=<%= "\"" + System.getenv().get("STATIC_FILES_URL") + "css/style.css\"" %> /> --%>
 	</head>
